@@ -1,0 +1,9 @@
+[1 of 1] Compiling T9951b           ( T9951b.hs, T9951b.o )
+
+T9951b.hs:7:1: Warning:
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘f’:
+        Patterns not matched:
+            ('a':_:_)
+            (t0:_) where t0 is not one of ['a']
+            []
