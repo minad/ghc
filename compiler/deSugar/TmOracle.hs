@@ -10,7 +10,7 @@
 module TmOracle (
           PmExpr(..), PmLit(..), PmVarEnv, SimpleEq, ComplexEq, PmNegLitCt,
           hsExprToPmExpr, lhsExprToPmExpr, isNotPmExprOther,
-          pmLitType, tmOracle, notForced, flattenPmVarEnv,
+          pmLitType, eqPmLit, tmOracle, notForced, flattenPmVarEnv,
           falsePmExpr, getValuePmExpr, filterComplex, runPmPprM,
           pprPmExprWithParens
           -- -- Incremental version
@@ -212,8 +212,8 @@ simplifyComplexEq eq =
 
     -- literals
     (PmExprLit l1, PmExprLit l2)
-      | l1 == l2  -> return (True, [])
-      | otherwise -> mismatch eq
+      | eqPmLit l1 l2 -> return (True, [])
+      | otherwise     -> mismatch eq
 
     -- constructors
     (PmExprCon c1 es1, PmExprCon c2 es2)
@@ -275,12 +275,12 @@ certainlyEqual e1 e2 =
     eqLit :: PmLit -> PmLit -> PmExpr
     eqLit l1 l2 = case (l1, l2) of
       (PmSLit {}, PmSLit {})
-        | l1 == l2  -> truePmExpr
-        | otherwise -> falsePmExpr
+        | eqPmLit l1 l2 -> truePmExpr
+        | otherwise     -> falsePmExpr
       (PmOLit {}, PmOLit {})
-        | l1 == l2  -> truePmExpr
-        | otherwise -> falsePmExpr
-      _overloaded   -> expr
+        | eqPmLit l1 l2 -> truePmExpr
+        | otherwise     -> falsePmExpr
+      _overloaded       -> expr
 
     certainlyEqualMany :: [PmExpr] -> [PmExpr] -> PmExpr
     certainlyEqualMany es1 es2 =

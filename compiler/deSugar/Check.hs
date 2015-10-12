@@ -927,8 +927,8 @@ cMatcher us gvsa (p@(PmCon { pm_con_con = c1, pm_con_args = args1 })) ps
 
 -- CLitLit
 cMatcher us gvsa (PmLit l1) ps (va@(PmLit l2)) vsa
-  | l1 /= l2  = Empty
-  | otherwise = VA va `mkCons` covered us gvsa ps vsa
+  | eqPmLit l1 l2  = VA va `mkCons` covered us gvsa ps vsa
+  | otherwise      = Empty
 
 -- CConVar
 cMatcher us gvsa (p@(PmCon { pm_con_con = con })) ps (PmVar x) vsa
@@ -979,8 +979,8 @@ uMatcher us gvsa ( p@(PmCon { pm_con_con = c1, pm_con_args = args1 })) ps
 
 -- ULitLit
 uMatcher us gvsa (PmLit l1) ps (va@(PmLit l2)) vsa
-  | l1 /= l2  = VA va `mkCons` vsa
-  | otherwise = VA va `mkCons` uncovered us gvsa ps vsa
+  | eqPmLit l1 l2 = VA va `mkCons` uncovered us gvsa ps vsa
+  | otherwise     = VA va `mkCons` vsa
 
 -- UConVar
 uMatcher us gvsa (p@(PmCon { pm_con_con = con })) ps (PmVar x) vsa
@@ -1043,8 +1043,8 @@ dMatcher us gvsa (p@(PmCon { pm_con_con = c1, pm_con_args = args1 })) ps
 
 -- DLitLit
 dMatcher us gvsa (PmLit l1) ps (va@(PmLit l2)) vsa
-  | l1 /= l2  = Empty
-  | otherwise = VA va `mkCons` divergent us gvsa ps vsa
+  | eqPmLit l1 l2 = VA va `mkCons` divergent us gvsa ps vsa
+  | otherwise     = Empty
 
 -- DConVar
 dMatcher us gvsa (p@(PmCon { pm_con_con = con })) ps (PmVar x) vsa

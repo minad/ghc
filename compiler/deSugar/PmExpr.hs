@@ -28,7 +28,7 @@ module PmExpr (
         filterComplex, runPmPprM, pprPmExprWithParens,
 
         -- Misc
-        truePmExpr, falsePmExpr, toComplex
+        truePmExpr, falsePmExpr, toComplex, eqPmLit
     ) where
 
 #include "HsVersions.h"
@@ -95,10 +95,16 @@ data PmExpr = PmExprVar   Id
 data PmLit = PmSLit HsLit                                    -- simple
            | PmOLit Bool {- is it negated? -} (HsOverLit Id) -- overloaded
 
-instance Eq PmLit where
-  PmSLit    l1 == PmSLit l2    = l1 == l2
-  PmOLit b1 l1 == PmOLit b2 l2 = b1 == b2 && l1 == l2
-  _ == _ = False
+-- do not make it an instance of Eq, we just need it for printing
+eqPmLit :: PmLit -> PmLit -> Bool
+eqPmLit (PmSLit    l1) (PmSLit l2   ) = l1 == l2 -- check the instances too for lits and olits
+eqPmLit (PmOLit b1 l1) (PmOLit b2 l2) = b1 == b2 && l1 == l2
+eqPmLit _               _             = False
+
+nubPmLit :: [PmLit] -> [PmLit]
+nubPmLit []     = []
+nubPmLit [x]    = [x]
+nubPmLit (x:xs) = x : nubPmLit (filter (not . eqPmLit x) xs)
 
 -- ----------------------------------------------------------------------------
 -- | Term equalities
@@ -336,7 +342,7 @@ filterComplex = zipWith rename nameList . map mkGroup
   where
     order x y = compare (fst x) (fst y)
     name  x y = fst x == fst y
-    mkGroup l = (fst (head l), nub $ map snd l)
+    mkGroup l = (fst (head l), nubPmLit $ map snd l)
     rename new (old, lits) = (old, (new, lits))
 
     isNegLitCs (e1,e2)
