@@ -29,7 +29,8 @@ module Type (
 
         mkTyConApp, mkTyConTy,
         tyConAppTyCon_maybe, tyConAppArgs_maybe, tyConAppTyCon, tyConAppArgs,
-        splitTyConApp_maybe, splitTyConApp, tyConAppArgN, nextRole,
+	splitTyConApp_maybe, splitTyConApp, tyConAppArgN, splitListTyConApp_maybe,
+        nextRole,
 
         mkForAllTy, mkForAllTys, splitForAllTy_maybe, splitForAllTys,
         mkPiKinds, mkPiType, mkPiTypes,
@@ -160,7 +161,7 @@ import NameEnv
 import Class
 import TyCon
 import TysPrim
-import {-# SOURCE #-} TysWiredIn ( eqTyCon, coercibleTyCon, typeNatKind, typeSymbolKind )
+import {-# SOURCE #-} TysWiredIn ( eqTyCon, listTyCon, coercibleTyCon, typeNatKind, typeSymbolKind )
 import PrelNames ( eqTyConKey, coercibleTyConKey,
                    ipClassNameKey, openTypeKindTyConKey,
                    constraintKindTyConKey, liftedTypeKindTyConKey )
@@ -562,6 +563,13 @@ splitTyConApp_maybe ty | Just ty' <- coreView ty = splitTyConApp_maybe ty'
 splitTyConApp_maybe (TyConApp tc tys) = Just (tc, tys)
 splitTyConApp_maybe (FunTy arg res)   = Just (funTyCon, [arg,res])
 splitTyConApp_maybe _                 = Nothing
+
+-- | Attempts to tease a list type apart and gives the type of the elements if
+-- successful (looks through type synonyms)
+splitListTyConApp_maybe :: Type -> Maybe Type
+splitListTyConApp_maybe ty = case splitTyConApp_maybe ty of
+  Just (tc,[e]) | tc == listTyCon -> Just e
+  _other                          -> Nothing
 
 -- | What is the role assigned to the next parameter of this type? Usually,
 -- this will be 'Nominal', but if the type is a 'TyConApp', we may be able to

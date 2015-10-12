@@ -221,6 +221,16 @@ mkPosLitPattern lit = NonGuard $ PmLit { pm_lit_lit = PmOLit False lit }
 mkNegLitPattern :: HsOverLit Id -> Pattern
 mkNegLitPattern lit = NonGuard $ PmLit { pm_lit_lit = PmOLit True lit }
 
+-- Specifically for overloaded strings. If we know that an overloaded x is a
+-- string, we can remove the fromString function since we know that it is the
+-- identity.
+oStrToHsLit_mb :: HsOverLit Id -> Maybe HsLit
+oStrToHsLit_mb olit
+  | ol_type olit == stringTy
+  , HsIsString src fs <- ol_val olit
+  = Just (HsString src fs)
+  | otherwise = Nothing
+
 -- -----------------------------------------------------------------------
 -- | Transform a Pat Id into a list of (PmPat Id) -- Note [Translation to PmPat]
 
@@ -266,12 +276,15 @@ translatePat pat = case pat of
     foldr (mkListPatVec ty) [nilPattern ty] <$> translatePatVec (map unLoc ps)
 
   -- overloaded list
-  ListPat lpats elem_ty (Just (pat_ty, to_list)) -> do
-    (xp, xe) <- mkPmId2FormsSM pat_ty
-    ps       <- translatePatVec (map unLoc lpats) -- list as value abstraction
-    let pats = foldr (mkListPatVec elem_ty) [nilPattern elem_ty] ps
-        g  = mkGuard pats (HsApp (noLoc to_list) xe) -- [...] <- toList x
-    return [xp,g]
+  ListPat lpats elem_ty (Just (pat_ty, to_list))
+    | Just e_ty <- splitListTyConApp_maybe pat_ty ->
+        translatePat (ListPat lpats e_ty Nothing) -- ensure that e_ty and elem_ty are the same?? (check OverlappingInstances)
+    | otherwise -> do
+        (xp, xe) <- mkPmId2FormsSM pat_ty
+        ps       <- translatePatVec (map unLoc lpats) -- list as value abstraction
+        let pats = foldr (mkListPatVec elem_ty) [nilPattern elem_ty] ps
+            g  = mkGuard pats (HsApp (noLoc to_list) xe) -- [...] <- toList x
+        return [xp,g]
 
   ConPatOut { pat_con = L _ (PatSynCon _) } -> do
     -- Pattern synonyms have a "matcher" (see Note [Pattern synonym representation] in PatSyn.hs
@@ -295,6 +308,7 @@ translatePat pat = case pat of
                               , pm_con_args    = args }]
 
   NPat lit mb_neg _eq
+    | Just hs_lit <- oStrToHsLit_mb lit -> translatePat (LitPat hs_lit) -- overloaded string
     | Just _  <- mb_neg -> return [mkNegLitPattern lit] -- negated literal
     | Nothing <- mb_neg -> return [mkPosLitPattern lit] -- non-negated literal
 
