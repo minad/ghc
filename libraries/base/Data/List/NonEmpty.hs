@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE Trustworthy #-} -- can't use Safe due to IsList instance
+{-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -----------------------------------------------------------------------------
@@ -113,7 +113,7 @@ import           Data.Functor.Classes (Eq1(..), Ord1(..), Read1(..), Show1(..))
 import qualified Data.List           as List
 import           Data.Monoid         ((<>))
 import           Data.Ord            (comparing)
-import qualified GHC.Exts            as Exts (IsList(..))
+import qualified GHC.OverloadedLists as OverloadedLists (IsList(..))
 import           GHC.Generics        (Generic, Generic1)
 
 infixr 5 :|, <|
@@ -146,7 +146,7 @@ instance Show1 NonEmpty where
     shwP 6 a . showString " :| " . shwL as
 
 -- | @since 4.9.0.0
-instance Exts.IsList (NonEmpty a) where
+instance OverloadedLists.IsList (NonEmpty a) where
   type Item (NonEmpty a) = a
   fromList               = fromList
   toList                 = toList

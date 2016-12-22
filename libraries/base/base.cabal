@@ -258,6 +258,7 @@ Library
         GHC.Num
         GHC.OldList
         GHC.OverloadedLabels
+        GHC.OverloadedLists
         GHC.PArr
         GHC.Pack
         GHC.Profiling
